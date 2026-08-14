@@ -34,15 +34,23 @@ HF后端无mmproj = "无（HF后端不需要）"
 常用HF模型 = [
     "Qwen/Qwen2.5-VL-3B-Instruct",
     "Qwen/Qwen2.5-VL-7B-Instruct",
+    "Qwen/Qwen2.5-VL-32B-Instruct",
+    "Qwen/Qwen2.5-VL-72B-Instruct",
     "Qwen/Qwen2-VL-2B-Instruct",
     "Qwen/Qwen2-VL-7B-Instruct",
+    "Qwen/Qwen3-VL-4B-Instruct",
+    "Qwen/Qwen3-VL-8B-Instruct",
+    "Qwen/Qwen3-VL-32B-Instruct",
+    "OpenGVLab/InternVL2_5-1B",
     "OpenGVLab/InternVL2_5-2B",
     "OpenGVLab/InternVL2_5-4B",
     "OpenGVLab/InternVL2_5-8B",
-    "THUDM/glm-4v-9b",
-    "zai-org/GLM-4.1V-Thinking-9B",
+    "OpenGVLab/InternVL2_5-26B",
+    "OpenGVLab/InternVL2_5-38B",
     "microsoft/Phi-3.5-vision-instruct",
     "llava-hf/llava-onevision-qwen2-0.5b-ov-hf",
+    "llava-hf/llava-onevision-qwen2-7b-ov-hf",
+    "THUDM/glm-4v-9b",
 ]
 
 
