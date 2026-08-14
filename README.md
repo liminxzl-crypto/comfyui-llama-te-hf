@@ -56,30 +56,110 @@
 
 如果显存不大，先从 3B 开始。跑通后再换 7B 或更大的模型。
 
-## 安装
+## 快速安装
 
-把本仓库放到 ComfyUI 的 `custom_nodes` 目录：
+推荐直接用 `git clone` 安装，后续更新最方便。
+
+### 1. 进入 ComfyUI 自定义节点目录
+
+如果你已经在 ComfyUI 根目录：
+
+```bash
+cd custom_nodes
+```
+
+如果还没进入 ComfyUI 根目录，请先进入你的 ComfyUI 目录，例如：
+
+```bash
+cd /你的/ComfyUI/custom_nodes
+```
+
+Windows 示例：
+
+```bat
+cd /d D:\ComfyUI\custom_nodes
+```
+
+### 2. 克隆仓库
+
+```bash
+git clone https://github.com/liminxzl-crypto/comfyui-llama-te-hf.git
+cd comfyui-llama-te-hf
+```
+
+克隆完成后，插件目录应该是：
 
 ```text
-ComfyUI/custom_nodes/comfyui-llama-te-hf
+ComfyUI/custom_nodes/comfyui-llama-te-hf/
 ```
 
-安装依赖：
+### 3. 安装依赖
+
+普通 Python / venv 环境：
 
 ```bash
-cd ComfyUI/custom_nodes/comfyui-llama-te-hf
 pip install -r requirements.txt
-```
-
-如果你的 ComfyUI 使用整合包或虚拟环境，请使用对应 Python 环境的 `pip`。
-
-建议使用较新的 Transformers：
-
-```bash
 pip install -U transformers accelerate
 ```
 
-重启 ComfyUI 后，在节点菜单里搜索 `Qwen HF TE`。
+如果使用 ComfyUI 整合包，请使用整合包里的 Python：
+
+```bat
+..\..\python_embeded\python.exe -m pip install -r requirements.txt
+..\..\python_embeded\python.exe -m pip install -U transformers accelerate
+```
+
+macOS / Linux 如果默认 `python3` 指向 ComfyUI 所在环境，也可以用：
+
+```bash
+python3 -m pip install -r requirements.txt
+python3 -m pip install -U transformers accelerate
+```
+
+### 4. 重启 ComfyUI
+
+完全重启 ComfyUI 后，在节点菜单里搜索：
+
+```text
+Qwen HF TE
+```
+
+### 手动安装
+
+如果你不想使用 git：
+
+1. 打开 <https://github.com/liminxzl-crypto/comfyui-llama-te-hf>
+2. 点击 `Code -> Download ZIP`
+3. 解压到 `ComfyUI/custom_nodes/comfyui-llama-te-hf/`
+4. 按上面的“安装依赖”步骤执行
+
+注意：手动下载 ZIP 后，目录不要多套一层，例如不要变成：
+
+```text
+ComfyUI/custom_nodes/comfyui-llama-te-hf-main/comfyui-llama-te-hf/
+```
+
+## 更新方法
+
+如果你是用 `git clone` 安装的：
+
+```bash
+cd ComfyUI/custom_nodes/comfyui-llama-te-hf
+git pull
+pip install -r requirements.txt
+pip install -U transformers accelerate
+```
+
+整合包示例：
+
+```bat
+cd /d D:\ComfyUI\custom_nodes\comfyui-llama-te-hf
+git pull
+..\..\python_embeded\python.exe -m pip install -r requirements.txt
+..\..\python_embeded\python.exe -m pip install -U transformers accelerate
+```
+
+如果你是手动下载 ZIP 安装的，重新下载 ZIP 并覆盖旧目录即可。
 
 ## 模型放置
 
