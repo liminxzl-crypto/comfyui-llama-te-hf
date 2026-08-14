@@ -179,7 +179,7 @@ def _同步Qwen模型(qwen_model):
 
     if need_reload:
         if not hasattr(qwen_model, "settings"):
-            raise RuntimeError("输入的模型对象缺少配置信息，无法自动重载。请先运行‘Qwen TE 模型加载器’。")
+            raise RuntimeError("输入的模型对象缺少配置信息，无法自动重载。请先运行‘Qwen HF TE 模型加载器’。")
         _QwenStorage.load(qwen_model.settings)
         qwen_model = _QwenStorage.model
 
@@ -448,7 +448,7 @@ class QwenTE对话增强设置:
     RETURN_TYPES = ("QWEN_TE_CHAT_SETTINGS",)
     RETURN_NAMES = ("增强设置",)
     FUNCTION = "run"
-    CATEGORY = "Qwen TE"
+    CATEGORY = "Qwen HF TE"
 
     def run(
         self,
@@ -488,7 +488,7 @@ class QwenTE多轮对话:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "qwen模型": ("QWENLLAMA",),
+                "qwen模型": ("QWEN_HF_TE_MODEL",),
                 "用户消息": ("STRING", {"default": "", "multiline": True}),
                 "对话历史JSON": ("STRING", {"default": "[]", "multiline": True}),
                 "请求ID": ("STRING", {"default": ""}),
@@ -505,7 +505,7 @@ class QwenTE多轮对话:
     RETURN_TYPES = ()
     RETURN_NAMES = ()
     FUNCTION = "run"
-    CATEGORY = "Qwen TE"
+    CATEGORY = "Qwen HF TE"
     OUTPUT_NODE = True
 
     def run(

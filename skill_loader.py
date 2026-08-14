@@ -136,7 +136,7 @@ class QwenTESkill加载器:
     RETURN_TYPES = ("QWEN_TE_SKILL",)
     RETURN_NAMES = ("skill加载器",)
     FUNCTION = "run"
-    CATEGORY = "Qwen TE"
+    CATEGORY = "Qwen HF TE"
 
     def run(self, skill):
         skills = 发现skills()

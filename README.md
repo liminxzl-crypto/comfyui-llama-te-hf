@@ -198,13 +198,13 @@ git pull
 
 有两种方式。
 
-模型系列建议和“主模型”保持一致：
+模型系列建议和“主模型”保持一致；不确定时可以选择 `自动`，节点会读取模型目录里的 `config.json` 自动选择合适的 Transformers 类。
 
-- 使用推荐默认模型时，模型系列选择 `Qwen2.5-VL`
-- 使用 Qwen2-VL 模型时，模型系列选择 `Qwen2-VL`
-- 如果使用 Qwen3.x 的 HF 格式模型，再选择对应的 `Qwen3-VL`、`Qwen3.5-VL` 或 `Qwen3.6-VL`
+- 使用推荐默认模型时，模型系列选择 `Qwen2.5-VL` 或 `自动`
+- 使用 Qwen2-VL 模型时，模型系列选择 `Qwen2-VL` 或 `自动`
+- 使用确认有官方 HF Transformers 支持的 Qwen3-VL 模型时，选择 `Qwen3-VL` 或 `自动`
 
-当前 HF 后端最稳定、最推荐的是 `Qwen2.5-VL`。模型系列参数主要用于界面标识和兼容旧工作流，真正决定模型的是“主模型”里填写的模型 ID 或本地路径。
+当前 HF 后端最稳定、最推荐的是 `Qwen2.5-VL`。Qwen3.5-VL / Qwen3.6-VL 目前没有确认稳定的官方 HF Transformers 仓库，默认不提供这两个系列选项；如果你确认某个第三方仓库可被当前 `transformers` 加载，可以选择 `自动` 后直接填写该 repo ID 或本地路径。
 
 方式一：直接在节点里填写 Hugging Face 模型 ID：
 
@@ -212,21 +212,55 @@ git pull
 Qwen/Qwen2.5-VL-3B-Instruct
 ```
 
-首次运行会自动下载到 Hugging Face 缓存。
+你可以在“自定义模型路径或ID”输入框里填写该 ID；留空时使用“主模型”下拉选择。首次运行会自动下载到 Hugging Face 缓存。
 
-方式二：手动下载整个模型目录，放到：
+方式二：手动下载整个模型目录，放到任意已注册的 `models/LLM` 目录下。支持一级或多级目录，例如：
 
 ```text
 ComfyUI/models/LLM/Qwen2.5-VL-3B-Instruct/
+ComfyUI/models/LLM/Qwen/Qwen2.5-VL-3B-Instruct/
 ```
 
-然后在节点“主模型”中选择或填写：
+关键是目录内必须直接包含 `config.json`，例如：
+
+```text
+ComfyUI/models/LLM/Qwen/Qwen2.5-VL-3B-Instruct/config.json
+```
+
+然后在节点“主模型”下拉菜单中选择：
+
+```text
+Qwen/Qwen2.5-VL-3B-Instruct
+```
+
+如果同一类模型只放了一个，也可以只填写最后一级目录名：
 
 ```text
 Qwen2.5-VL-3B-Instruct
 ```
 
-注意：本版本不支持 `.gguf` 文件，也不需要 `mmproj`。
+注意：本版本不支持 `.gguf` 文件，也不需要 `mmproj`。如果提示找不到模型，错误信息会列出实际搜索过的 `models/LLM` 目录和 Hugging Face 缓存目录，请按提示检查模型位置。
+
+### 推荐下载命令
+
+如果使用 Hugging Face CLI，在 ComfyUI 根目录执行：
+
+```bash
+huggingface-cli download Qwen/Qwen2.5-VL-3B-Instruct --local-dir models/LLM/Qwen/Qwen2.5-VL-3B-Instruct
+```
+
+如果国内网络访问 Hugging Face 不稳定，可以使用 ModelScope：
+
+```bash
+pip install -U modelscope
+modelscope download --model Qwen/Qwen2.5-VL-3B-Instruct --local_dir models/LLM/Qwen/Qwen2.5-VL-3B-Instruct
+```
+
+下载完成后确认这个文件存在：
+
+```text
+models/LLM/Qwen/Qwen2.5-VL-3B-Instruct/config.json
+```
 
 ## 基本工作流
 
@@ -294,7 +328,8 @@ skills/
 - 不支持 llama.cpp GGUF 模型
 - 不支持 llama.cpp `mmproj`
 - Gemma4 音频推理暂未实现，节点会明确报错
-- 多轮聊天界面没有改动原前端结构，仍使用 `QwenTE_MultiTurnChat` 类名
+- 为避免和原作者节点同时安装时互相覆盖，本版本使用独立的内部节点名：`QwenHFTE_*` / `Gemma4HFTE_*`。界面显示名仍是 `Qwen HF TE` / `Gemma4 HF TE`
+- 多轮聊天界面前端注册名为 `QwenHFTE.MultiTurnChat`
 - 某些 HF 视觉模型的 chat template 差异较大；推荐优先使用 Qwen2.5-VL
 
 ## 常见问题

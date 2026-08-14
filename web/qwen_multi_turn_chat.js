@@ -1,7 +1,7 @@
 import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
 
-const NODE_CLASS = "QwenTE_MultiTurnChat";
+const NODE_CLASS = "QwenHFTE_MultiTurnChat";
 const CHAT_MIN_HEIGHT = 260;
 const CHAT_NODE_CHROME_HEIGHT = 110;
 const CHAT_WIDGET_PADDING = 10;
@@ -843,7 +843,7 @@ function setupChatNode(node) {
 }
 
 app.registerExtension({
-    name: "QwenTE.MultiTurnChat",
+    name: "QwenHFTE.MultiTurnChat",
     nodeCreated(node) {
         if (node.constructor?.comfyClass === NODE_CLASS) setupChatNode(node);
     },
