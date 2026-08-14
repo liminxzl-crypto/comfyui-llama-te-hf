@@ -31,30 +31,63 @@
 - Skill reference 按需加载
 - 选项按钮、复制消息、复制代码、重新生成最后一条回复
 
-## 推荐模型
+## 模型选择与下载
 
-首选 Qwen2.5-VL：
+这个后端使用 Hugging Face Transformers，不是 llama.cpp/GGUF，所以请选择官方或社区提供的 HF 格式模型目录。不要选择 `.gguf`，也不需要 `mmproj`。
 
-- `Qwen/Qwen2.5-VL-3B-Instruct`
-- `Qwen/Qwen2.5-VL-7B-Instruct`
+### 最推荐
 
-也可以尝试：
+综合稳定性、速度、中文图片理解、多帧输入和多轮聊天，当前最推荐：
 
-- `Qwen/Qwen2-VL-2B-Instruct`
-- `Qwen/Qwen2-VL-7B-Instruct`
-- `OpenGVLab/InternVL2_5-2B`
-- `OpenGVLab/InternVL2_5-4B`
-- `OpenGVLab/InternVL2_5-8B`
-- `zai-org/GLM-4.1V-Thinking-9B`
-- `microsoft/Phi-3.5-vision-instruct`
-- `llava-hf/llava-onevision-qwen2-0.5b-ov-hf`
+1. `Qwen/Qwen2.5-VL-3B-Instruct`：首选，适合大多数 6GB 到 10GB 显存用户，速度快，兼容性最好。
+2. `Qwen/Qwen2.5-VL-7B-Instruct`：图片描述和推理质量更好，建议 10GB 到 16GB 以上显存。
+3. `Qwen/Qwen3-VL-4B-Instruct`：新版官方 Qwen3-VL，适合想尝试新模型的用户；如果遇到 chat template 或 processor 兼容问题，优先换回 Qwen2.5-VL。
 
-模型下载：
+为什么这里默认推荐 Qwen2.5-VL：它在 HF Transformers 里的 `AutoProcessor`、chat template、图片/多图输入支持更稳定。Qwen3.5-VL / Qwen3.6-VL 目前没有确认稳定的官方 HF Transformers 仓库；搜索到的多为第三方、GGUF、MLX 或量化版本，不建议作为这个节点的默认模型。
 
-- Hugging Face: <https://huggingface.co/Qwen/Qwen2.5-VL-3B-Instruct>
-- ModelScope: <https://modelscope.cn/models/Qwen/Qwen2.5-VL-3B-Instruct>
+### 按用途选择
 
-如果显存不大，先从 3B 开始。跑通后再换 7B 或更大的模型。
+| 用途 | 推荐模型 | 说明 |
+| --- | --- | --- |
+| 低显存、快速反推、首次测试 | `Qwen/Qwen2.5-VL-3B-Instruct` | 最稳的起点 |
+| 更高质量图片描述 | `Qwen/Qwen2.5-VL-7B-Instruct` | 质量和速度比较均衡 |
+| 视频抽帧/多图分析 | `Qwen/Qwen2.5-VL-3B-Instruct`、`Qwen/Qwen2.5-VL-7B-Instruct` | 多帧会增加显存，建议降低“最多帧数”和“最大边长” |
+| 新版 Qwen 视觉模型 | `Qwen/Qwen3-VL-4B-Instruct`、`Qwen/Qwen3-VL-8B-Instruct` | 可用，但属于 HF 后端的次优先选项 |
+| 极小显存/CPU 尝试 | `OpenGVLab/InternVL2_5-1B`、`OpenGVLab/InternVL2_5-2B`、`llava-hf/llava-onevision-qwen2-0.5b-ov-hf` | 质量弱一些，但更容易跑起来 |
+| 高质量图片理解 | `OpenGVLab/InternVL2_5-4B`、`OpenGVLab/InternVL2_5-8B` | 可作为 Qwen2.5-VL 之外的备选 |
+| 高显存/强推理 | `Qwen/Qwen2.5-VL-32B-Instruct`、`Qwen/Qwen3-VL-32B-Instruct`、`OpenGVLab/InternVL2_5-26B` | 建议 24GB 以上显存 |
+| 实验性兼容模型 | `microsoft/Phi-3.5-vision-instruct`、`THUDM/glm-4v-9b` | 能用但不同版本的模板兼容性可能有差异 |
+
+显存只是粗略参考，实际占用还受图片分辨率、帧数、上下文长度、量化方式和 `device_map` 影响。
+
+### 可用模型和下载地址
+
+| 模型 ID | 适合功能 | 建议 | 下载 |
+| --- | --- | --- | --- |
+| `Qwen/Qwen2.5-VL-3B-Instruct` | 图片、多帧、文本、多轮聊天 | 最推荐 | [HF](https://huggingface.co/Qwen/Qwen2.5-VL-3B-Instruct) / [ModelScope](https://modelscope.cn/models/Qwen/Qwen2.5-VL-3B-Instruct) |
+| `Qwen/Qwen2.5-VL-7B-Instruct` | 图片理解、视频帧分析、长回复 | 质量优先 | [HF](https://huggingface.co/Qwen/Qwen2.5-VL-7B-Instruct) / [ModelScope](https://modelscope.cn/models/Qwen/Qwen2.5-VL-7B-Instruct) |
+| `Qwen/Qwen2.5-VL-32B-Instruct` | 强推理、复杂图片任务 | 24GB+ 显存 | [HF](https://huggingface.co/Qwen/Qwen2.5-VL-32B-Instruct) / [ModelScope](https://modelscope.cn/models/Qwen/Qwen2.5-VL-32B-Instruct) |
+| `Qwen/Qwen2.5-VL-72B-Instruct` | 最高质量本地推理 | 多卡/大显存 | [HF](https://huggingface.co/Qwen/Qwen2.5-VL-72B-Instruct) / [ModelScope](https://modelscope.cn/models/Qwen/Qwen2.5-VL-72B-Instruct) |
+| `Qwen/Qwen2-VL-2B-Instruct` | 低显存、快速测试 | 旧版但轻量 | [HF](https://huggingface.co/Qwen/Qwen2-VL-2B-Instruct) / [ModelScope](https://modelscope.cn/models/Qwen/Qwen2-VL-2B-Instruct) |
+| `Qwen/Qwen2-VL-7B-Instruct` | 图片理解、文本推理 | 旧版备选 | [HF](https://huggingface.co/Qwen/Qwen2-VL-7B-Instruct) / [ModelScope](https://modelscope.cn/models/Qwen/Qwen2-VL-7B-Instruct) |
+| `Qwen/Qwen3-VL-4B-Instruct` | 新版视觉理解 | 推荐尝试 | [HF](https://huggingface.co/Qwen/Qwen3-VL-4B-Instruct) |
+| `Qwen/Qwen3-VL-8B-Instruct` | 新版视觉理解 | 12GB+ 显存更稳 | [HF](https://huggingface.co/Qwen/Qwen3-VL-8B-Instruct) |
+| `Qwen/Qwen3-VL-32B-Instruct` | 新版强推理 | 24GB+ 显存 | [HF](https://huggingface.co/Qwen/Qwen3-VL-32B-Instruct) |
+| `OpenGVLab/InternVL2_5-1B` | 低显存图片理解 | 轻量备选 | [HF](https://huggingface.co/OpenGVLab/InternVL2_5-1B) |
+| `OpenGVLab/InternVL2_5-2B` | 低显存图片理解 | 轻量备选 | [HF](https://huggingface.co/OpenGVLab/InternVL2_5-2B) |
+| `OpenGVLab/InternVL2_5-4B` | 图片描述、OCR、视觉问答 | 质量较好 | [HF](https://huggingface.co/OpenGVLab/InternVL2_5-4B) |
+| `OpenGVLab/InternVL2_5-8B` | 图片描述、复杂视觉任务 | 12GB+ 显存 | [HF](https://huggingface.co/OpenGVLab/InternVL2_5-8B) |
+| `OpenGVLab/InternVL2_5-26B` | 高质量视觉推理 | 24GB+ 显存 | [HF](https://huggingface.co/OpenGVLab/InternVL2_5-26B) |
+| `OpenGVLab/InternVL2_5-38B` | 高质量视觉推理 | 大显存/多卡 | [HF](https://huggingface.co/OpenGVLab/InternVL2_5-38B) |
+| `microsoft/Phi-3.5-vision-instruct` | 图片理解、轻量多语 | 实验性兼容 | [HF](https://huggingface.co/microsoft/Phi-3.5-vision-instruct) |
+| `llava-hf/llava-onevision-qwen2-0.5b-ov-hf` | 极低显存图片理解 | 实验性兼容 | [HF](https://huggingface.co/llava-hf/llava-onevision-qwen2-0.5b-ov-hf) |
+| `THUDM/glm-4v-9b` | 中文视觉理解 | 实验性兼容 | [HF](https://huggingface.co/THUDM/glm-4v-9b) |
+
+不建议在这个 HF 后端中使用：
+
+- `.gguf` 文件：这是 llama.cpp 格式，本节点不会加载。
+- 需要 `mmproj` 的模型目录：本节点不需要也不会使用 llama.cpp 的视觉投影文件。
+- 未确认支持 Transformers 的第三方 Qwen3.5/Qwen3.6 量化仓库：可能是 GGUF、MLX 或专用推理格式，不能保证 `AutoProcessor` / `AutoModelForVision2Seq` 能加载。
 
 ## 快速安装
 
