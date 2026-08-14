@@ -520,7 +520,13 @@ class QwenTE模型加载器:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "模型系列": (["Qwen3-VL", "Qwen3.5-VL", "Qwen3.6-VL"], {"default": "Qwen3.6-VL"}),
+                "模型系列": (
+                    ["Qwen2-VL", "Qwen2.5-VL", "Qwen3-VL", "Qwen3.5-VL", "Qwen3.6-VL"],
+                    {
+                        "default": "Qwen2.5-VL",
+                        "tooltip": "HF/Transformers 后端推荐 Qwen2.5-VL。保留 Qwen3.x 选项以兼容旧工作流；只有在“主模型”填写兼容的 HF 模型时才选择对应系列。",
+                    },
+                ),
                 "主模型": (
                     "STRING",
                     {
