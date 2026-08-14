@@ -221,10 +221,12 @@ ComfyUI/models/LLM/Qwen2.5-VL-3B-Instruct/
 ComfyUI/models/LLM/Qwen/Qwen2.5-VL-3B-Instruct/
 ```
 
-关键是目录内必须直接包含 `config.json`，例如：
+关键是这个模型目录里能找到 `config.json`。节点会从你选择的模型文件夹继续向下查找，所以下载工具多套一层普通子目录，或使用 `snapshots/<hash>` 缓存布局，都不需要手动搬文件。例如：
 
 ```text
 ComfyUI/models/LLM/Qwen/Qwen2.5-VL-3B-Instruct/config.json
+ComfyUI/models/LLM/Qwen2.5-VL-3B-Instruct/snapshots/<hash>/config.json
+ComfyUI/models/LLM/Qwen2.5-VL-3B-Instruct/<下载工具生成的子目录>/config.json
 ```
 
 然后在节点“主模型”下拉菜单中选择：
@@ -256,11 +258,13 @@ pip install -U modelscope
 modelscope download --model Qwen/Qwen2.5-VL-3B-Instruct --local_dir models/LLM/Qwen/Qwen2.5-VL-3B-Instruct
 ```
 
-下载完成后确认这个文件存在：
+下载完成后确认模型目录内存在 `config.json`：
 
 ```text
 models/LLM/Qwen/Qwen2.5-VL-3B-Instruct/config.json
 ```
+
+如果下载工具把文件放在子目录里，也可以直接选择上层的 `Qwen2.5-VL-3B-Instruct` 文件夹，节点会自动向下查找真正的模型目录。
 
 ## 基本工作流
 

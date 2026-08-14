@@ -138,9 +138,66 @@ def _是hf模型目录(path):
     return bool(path) and os.path.isdir(path) and os.path.isfile(os.path.join(path, "config.json"))
 
 
+def _查找本地hf模型目录(path):
+    """返回真正包含 config.json 的模型目录。
+
+    有些下载工具会把模型文件放在用户选择目录的下一层，或者使用
+    snapshots/<hash> 缓存布局。这里允许从用户选择的模型目录继续向下查找。
+    """
+    if not path or not os.path.isdir(path):
+        return None
+
+    base = os.path.abspath(path)
+    if _是hf模型目录(base):
+        return base
+
+    snapshots_dir = os.path.join(base, "snapshots")
+    if os.path.isdir(snapshots_dir):
+        for snapshot in sorted(os.listdir(snapshots_dir), reverse=True):
+            snapshot_path = os.path.join(snapshots_dir, snapshot)
+            if _是hf模型目录(snapshot_path):
+                return os.path.abspath(snapshot_path)
+
+    max_depth = 6
+    base_depth = base.rstrip(os.sep).count(os.sep)
+    for root, dirs, files in os.walk(base):
+        depth = root.rstrip(os.sep).count(os.sep) - base_depth
+        if depth >= max_depth:
+            dirs[:] = []
+        dirs[:] = sorted(
+            name
+            for name in dirs
+            if not _跳过扫描目录(name) and name.lower() not in {"blobs", "refs"}
+        )
+        if "config.json" in files:
+            return os.path.abspath(root)
+
+    return None
+
+
 def _是hf模型ID(value):
     text = str(value or "").strip().replace("\\", "/")
     return bool(HF_MODEL_ID_RE.match(text)) and not text.startswith(".") and ".." not in text.split("/")
+
+
+def _短模型名补全repo_id(value):
+    text = str(value or "").strip().replace("\\", "/")
+    if not text or "/" in text or os.path.isabs(text):
+        return None
+    lowered = text.lower()
+    if lowered.startswith(("qwen2.5-vl", "qwen2_5_vl", "qwen2.5vl")):
+        return f"Qwen/{text}"
+    if lowered.startswith(("qwen2-vl", "qwen2_vl", "qwen2vl")):
+        return f"Qwen/{text}"
+    if lowered.startswith(("qwen3-vl", "qwen3_vl", "qwen3vl", "qwen3")):
+        return f"Qwen/{text}"
+    if lowered.startswith("internvl"):
+        return f"OpenGVLab/{text}"
+    if lowered.startswith("phi-3.5"):
+        return f"microsoft/{text}"
+    if lowered.startswith("glm-4v"):
+        return f"THUDM/{text}"
+    return None
 
 
 def _跳过扫描目录(name):
@@ -221,34 +278,48 @@ def _列出hf模型候选():
             seen.add(value)
             candidates.append(value)
 
-    def is_hf_dir(path):
-        return os.path.isfile(os.path.join(path, "config.json"))
+    def looks_like_model_dirname(name):
+        lowered = str(name or "").lower()
+        return (
+            lowered.startswith("models--")
+            or any(char.isdigit() for char in name)
+            or lowered.startswith(("qwen", "internvl", "glm", "llava", "phi"))
+        )
 
     for base_dir in _获取llm搜索路径():
         if not os.path.isdir(base_dir):
             continue
         for root, dirs, files in os.walk(base_dir):
             dirs[:] = [name for name in dirs if not _跳过扫描目录(name)]
-            if not is_hf_dir(root):
+            if "config.json" not in files:
                 continue
-            if is_hf_dir(root):
-                model_dirs.append((base_dir, root))
+
+            display_root = root
+            relative_parts = os.path.relpath(root, base_dir).split(os.sep)
+            if len(relative_parts) >= 3 and relative_parts[-2] == "snapshots":
+                display_root = os.path.join(base_dir, *relative_parts[:-2])
+            elif len(relative_parts) > 1 and looks_like_model_dirname(relative_parts[0]):
+                display_root = os.path.join(base_dir, relative_parts[0])
+
+            model_dirs.append((base_dir, display_root, root))
 
     basename_counts = {}
-    for _base_dir, root in model_dirs:
-        name = os.path.basename(root)
+    for _base_dir, display_root, _actual_root in model_dirs:
+        name = os.path.basename(display_root)
         basename_counts[name] = basename_counts.get(name, 0) + 1
 
-    for base_dir, root in model_dirs:
-        relative = os.path.relpath(root, base_dir).replace(os.sep, "/")
+    for base_dir, display_root, _actual_root in model_dirs:
+        relative = os.path.relpath(display_root, base_dir).replace(os.sep, "/")
         add(relative)
-        if basename_counts.get(os.path.basename(root), 0) == 1:
-            add(os.path.basename(root))
+        add(os.path.basename(display_root))
 
-        # 如果用户把 Hugging Face 缓存目录整个放到了 models/LLM 下，显示成 repo ID。
-        parts = relative.split("/")
-        if len(parts) >= 3 and parts[0].startswith("models--") and "snapshots" in parts:
-            repo_id = _从缓存目录名解析repo_id(parts[0])
+        display_parts = relative.split("/")
+        if (
+            len(display_parts) >= 3
+            and display_parts[0].startswith("models--")
+            and "snapshots" in display_parts
+        ):
+            repo_id = _从缓存目录名解析repo_id(display_parts[0])
             if repo_id:
                 add(repo_id)
 
@@ -356,18 +427,42 @@ def _解析模型路径(模型名称):
 
     if os.path.isabs(raw):
         absolute = os.path.abspath(os.path.expanduser(raw))
-        if _是hf模型目录(absolute):
-            return absolute
+        resolved = _查找本地hf模型目录(absolute)
+        if resolved:
+            return resolved
         if os.path.exists(absolute):
             raise FileNotFoundError(f"模型目录存在但缺少 config.json：{absolute}")
         raise FileNotFoundError(f"找不到本地模型目录：{absolute}")
 
     for base_dir in _获取llm搜索路径():
-        for rel in (normalized_raw, base_name):
+        # 完整路径或 repo 风格名称先做精确匹配，避免同名短目录抢先命中。
+        candidate = os.path.abspath(os.path.join(base_dir, normalized_raw))
+        searched.append(candidate)
+        resolved = _查找本地hf模型目录(candidate)
+        if resolved:
+            return resolved
+
+    try:
+        found_path = folder_paths.get_full_path("LLM", raw)
+        searched.append(found_path)
+        if found_path:
+            resolved = _查找本地hf模型目录(found_path)
+            if resolved:
+                return resolved
+    except Exception:
+        pass
+
+    cached = _查找hf缓存快照(normalized_raw)
+    if cached:
+        return cached
+
+    for base_dir in _获取llm搜索路径():
+        for rel in (base_name,):
             candidate = os.path.abspath(os.path.join(base_dir, rel))
             searched.append(candidate)
-            if _是hf模型目录(candidate):
-                return candidate
+            resolved = _查找本地hf模型目录(candidate)
+            if resolved:
+                return resolved
 
     # 兼容只选择了模型文件夹名，但模型实际放在二级/三级目录中的情况。
     for base_dir in _获取llm搜索路径():
@@ -380,17 +475,28 @@ def _解析模型路径(模型名称):
 
     # ComfyUI 的 get_full_path 对文件型模型最可靠；这里保留作为兜底。
     try:
-        for name in (raw, base_name):
+        for name in (base_name,):
             found_path = folder_paths.get_full_path("LLM", name)
             searched.append(found_path)
-            if found_path and _是hf模型目录(found_path):
-                return os.path.abspath(found_path)
+            if found_path:
+                resolved = _查找本地hf模型目录(found_path)
+                if resolved:
+                    return resolved
     except Exception:
         pass
 
-    cached = _查找hf缓存快照(normalized_raw)
-    if cached:
-        return cached
+    cached_by_base = _查找hf缓存快照(base_name)
+    if cached_by_base:
+        return cached_by_base
+
+    repo_id = _短模型名补全repo_id(normalized_raw)
+    if repo_id:
+        cached_by_repo = _查找hf缓存快照(repo_id)
+        if cached_by_repo:
+            return cached_by_repo
+        # 旧工作流常保存成 Qwen2.5-VL-3B-Instruct；本地没有目录时，直接回退到官方 HF repo ID。
+        if _是hf模型ID(repo_id):
+            return repo_id
 
     # 如果本地和缓存都没有，但输入看起来是合法的 Hugging Face repo ID，
     # 交给 Transformers 按 repo ID 处理，允许自动下载或读取系统默认缓存。
@@ -407,6 +513,7 @@ def _解析模型路径(模型名称):
         f"已搜索 Hugging Face 缓存：{cache_root}\n\n"
         "请把完整 HF 模型目录放到其中一个 models/LLM 目录下，例如：\n"
         f"{os.path.join(_默认llm目录(), 'Qwen', 'Qwen2.5-VL-3B-Instruct', 'config.json')}\n\n"
+        "节点也会在你选择的模型文件夹内继续向下查找 config.json，因此下载工具多套一层子目录时不需要手动搬文件。\n\n"
         "或者先通过 huggingface-cli / ModelScope 下载模型，再重新选择下拉菜单。"
     )
 
