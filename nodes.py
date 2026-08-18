@@ -395,7 +395,8 @@ def _规范化随机种子(seed_value):
         return None
     if seed_value < 0:
         return None
-    return seed_value
+    # 限制在 NumPy 允许的 32 位无符号整数范围内 (0 ~ 2**32 - 1)
+    return seed_value % (2**32)
 
 
 def _设置随机种子(seed_value):
@@ -1058,10 +1059,12 @@ class _HF图像推理基类:
     CATEGORY = "Qwen HF TE"
 
     def run(self, **kwargs):
-        return self._run(**kwargs)
+        model_value = kwargs.get(self.模型输入名)
+        return self._run(model_value, **kwargs)
 
     def _run(
         self,
+        模型对象,
         输入模式,
         提示词,
         系统提示词,
@@ -1081,7 +1084,7 @@ class _HF图像推理基类:
         **_ignored,
     ):
         del 频率惩罚, 存在惩罚, _ignored
-        model_bundle = self._同步模型(kwargs.get(self.模型输入名))
+        model_bundle = self._同步模型(模型对象)
         processor = model_bundle.processor
         model = model_bundle.model
         think = bool(model_bundle.settings.get("think", False))
